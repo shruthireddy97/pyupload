@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+fpdf
+assemblyai
+motor
+dotenv
+python-multipart
+passlib
+python-jose[cryptography]
+jose
+pydantic[email]
+bcrypt
+cloudinary
+sqlalchemy
+aiomysql
+httpx
