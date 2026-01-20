@@ -17,8 +17,23 @@ export default function LessonsPage() {
       .catch(console.error);
   }, [userId]);
 
+  const getDisplayFilename = (upload) => {
+    return upload.original_file?.filename || upload.audio?.filename || "Unknown";
+  };
+
+  const getFileType = (upload) => {
+    const ext = upload.file_type || upload.audio?.filename?.split(".").pop() || "";
+    return ext.toUpperCase();
+  };
+
+  const isAudioFile = (upload) => {
+    const audioExts = [".mp3", ".wav", ".m4a", ".flac", ".ogg"];
+    const ext = upload.file_type || "";
+    return audioExts.includes(ext.toLowerCase());
+  };
+
   const filteredUploads = uploads.filter((u) =>
-    u.audio?.filename?.toLowerCase().includes(searchTerm.toLowerCase())
+    getDisplayFilename(u).toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -44,18 +59,29 @@ export default function LessonsPage() {
               <button
                 key={upload._id}
                 onClick={() => setSelectedUpload(upload)}
-                className={`w-full text-left p-4 rounded-lg border hover:bg-blue-50 transition ${
+                className={`w-full text-left p-4 rounded-lg border transition ${
                   selectedUpload?._id === upload._id
-                    ? "border-blue-500 bg-blue-50"
-                    : ""
+                    ? "border-blue-600 bg-blue-600 text-white"
+                    : "bg-gray-800 text-white border-gray-700 hover:bg-gray-700"
                 }`}
               >
-                <p className="font-medium text-white">
-                  {upload.audio.filename}
-                </p>
-                <p className="text-xs text-gray-200">
-                  {new Date(upload.created_at).toLocaleString()}
-                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium truncate text-sm">
+                      {getDisplayFilename(upload)}
+                    </p>
+                    <p className="text-xs opacity-80 truncate">
+                      {new Date(upload.created_at).toLocaleString()}
+                    </p>
+                  </div>
+                  <span className={`ml-2 px-2 py-1 text-xs font-semibold rounded whitespace-nowrap ${
+                    selectedUpload?._id === upload._id
+                      ? "bg-blue-400 text-blue-900"
+                      : "bg-gray-600 text-gray-100"
+                  }`}>
+                    {getFileType(upload)}
+                  </span>
+                </div>
               </button>
             ))}
           </div>
@@ -65,26 +91,61 @@ export default function LessonsPage() {
         <div className="md:col-span-2 bg-white rounded-lg shadow-md p-6">
           {!selectedUpload ? (
             <p className="text-gray-500">
-              Select a lesson to view transcript and play audio
+              Select a lesson to view content and text extraction
             </p>
           ) : (
             <>
-              <h3 className="text-xl font-semibold mb-4">
-                {selectedUpload.audio.filename}
+              <h3 className="text-xl font-semibold mb-2">
+                {getDisplayFilename(selectedUpload)}
               </h3>
+              <p className="text-sm text-gray-500 mb-4">
+                Type: {getFileType(selectedUpload)} | {new Date(selectedUpload.created_at).toLocaleString()}
+              </p>
 
-              {/* Audio Player */}
-              <audio
-                controls
-                className="w-full mb-6"
-                src={selectedUpload.audio.cloudinary_url}
-              />
+              {/* Audio Player - Only for audio files */}
+              {isAudioFile(selectedUpload) && (
+                <div className="mb-6">
+                  <h4 className="font-semibold mb-2">Audio Player</h4>
+                  <audio
+                    controls
+                    className="w-full"
+                    src={selectedUpload.original_file?.cloudinary_url}
+                  />
+                </div>
+              )}
 
-              {/* Transcript */}
+              {/* Document/Image Preview */}
+              {!isAudioFile(selectedUpload) && (
+                <div className="mb-6">
+                  <h4 className="font-semibold mb-2">Document Preview</h4>
+                  <a
+                    href={selectedUpload.original_file?.cloudinary_url}
+                    target="_blank"
+                    style={{color: 'white'}}
+                    rel="noopener noreferrer"
+                    className="inline-block px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+                  >
+                    📄 Open Original File
+                  </a>
+                  <a
+                    href={selectedUpload.pdf?.cloudinary_url}
+                    target="_blank"
+                    style={{color: 'white'}}
+                    rel="noopener noreferrer"
+                    className="ml-2 inline-block px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+                  >
+                    📕 View Extracted PDF
+                  </a>
+                </div>
+              )}
+
+              {/* Extracted Text */}
               <div className="border rounded-lg p-4 bg-gray-50 max-h-[400px] overflow-y-auto">
-                <h4 className="font-semibold mb-2">Transcript</h4>
+                <h4 className="font-semibold mb-2">
+                  {isAudioFile(selectedUpload) ? "Transcript" : "Extracted Text"}
+                </h4>
                 <p className="whitespace-pre-wrap text-gray-700 text-sm">
-                  {selectedUpload.transcript}
+                  {selectedUpload.extracted_text || selectedUpload.transcript || "No text available"}
                 </p>
               </div>
             </>
