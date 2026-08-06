@@ -1,4 +1,11 @@
 fastapi
 uvicorn
-fpdf
-assemblyai
+boto3
+python-dotenv
+psycopg2-binary
+pgvector
+pandas
+numpy
+openpyxl
+requests
+python-multipart
